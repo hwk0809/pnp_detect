@@ -21,6 +21,7 @@ cv_bridge::CvImage cv_bridge_current_img{};
 Mat cur_img;
 float Bottom_Servo;
 float Top_Servo;
+int Servo_time;
 
 class Board{
     //左上角开始 顺时针 前x 左y 上z
@@ -59,7 +60,7 @@ void imageCB(const sensor_msgs::Image msg){
 
 //回调函数，
 void imageCB2(const geometry_msgs::Vector3Stamped msg2){
-
+    Servo_time=msg2.header.stamp.sec;
     Bottom_Servo=msg2.vector.x;
     Top_Servo=msg2.vector.y;
 }
@@ -190,6 +191,7 @@ int main(int argc,char* *argvs){
             cv::putText(resultImage, std::to_string(i) , point_center[i], cv::FONT_HERSHEY_PLAIN, 3, cv::Scalar(255,120,0), 3);
         }
         pnp_points_msg.header.stamp = ros::Time::now();
+        pnp_points_msg.header.stamp.sec = Servo_time;
         for (int i = 0; i < point_center.size(); ++i) {
             pnp_points_msg.PNPPoints[i].x = point_center[i].x;
             pnp_points_msg.PNPPoints[i].y = point_center[i].y;

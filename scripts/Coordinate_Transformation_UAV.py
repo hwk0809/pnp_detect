@@ -11,16 +11,37 @@ import pyquaternion
 # 输入参数部分：1.四个点像素坐标系坐标  2.舵机两个角度
 # ======================================================
 # 像素坐标系坐标，四个点的形式分别为[x ,y]，左上顺时针为序
-img_1 = [493.57144165, 713.19049072]
-img_2 = [532.645812988, 709.5]
-img_3 = [533.642883301, 724.261901855]
-img_4 = [494.5, 727.354187012]
-imgPoints = np.array([img_1, img_2, img_3, img_4], dtype=np.float64)
+# static
+# img_1 = [493.57144165, 713.19049072]
+# img_2 = [532.645812988, 709.5]
+# img_3 = [533.642883301, 724.261901855]
+# img_4 = [494.5, 727.354187012]
+# imgPoints = np.array([img_1, img_2, img_3, img_4], dtype=np.float64)
+
+# rotate
+# img_1 = [602.0, 524.0]
+# img_2 = [638.0, 522.5]
+# img_3 = [638.422241211, 535.422241211]
+# img_4 = [602.5, 537.0]
+# imgPoints = np.array([img_1, img_2, img_3, img_4], dtype=np.float64)
 # 舵机角度
-UGV_1 = -2.98828125
-UGV_2 = 1.318359375
-UGV_1 = 0
-UGV_2 = 0
+# static
+# UGV_1 = -2.98828125
+# UGV_2 = 1.318359375
+# # rotate
+# UGV_1 = -4.130859375
+# UGV_2 = -5.2734375
+
+# rotate test
+img_1 = [586.587524414, 527.866638184]
+img_2 = [653.659179688,523.464416504]
+img_3 = [655.58972168, 547.41027832]
+img_4 = [588.5, 551.837280273]
+imgPoints = np.array([img_1, img_2, img_3, img_4], dtype=np.float64)
+UGV_1 = -1.669921875
+UGV_2 = -9.66796875
+
+
 
 # ======================================================
 # 定义基本函数
@@ -81,7 +102,7 @@ def cal_camera_to_base(theta1, theta2):
     return R_camera_to_base, t_camera_to_base
 
 
-# 描述相机坐标系的位姿变换(初始坐标系 - 运动后的坐标系）
+# 描述相机坐标系的位姿变换( 运动后的坐标系 -初始坐标系）
 def cal_camera_posture(theta1, theta2):
     R_theta, t_theta = cal_camera_to_base(theta1, theta2)
     R_0, t_0 = cal_camera_to_base(0, 0)
@@ -104,16 +125,52 @@ world1 = np.array([10, 55, -150])
 world2 = np.array([10, -55, -150])
 world3 = np.array([50, -55, -150])
 world4 = np.array([50, 55, -150])
-
 objPoints = np.array([world1, world2, world3, world4], dtype=np.float64)
+# 初始时刻相机坐标系 -初始时刻机体坐标系  的坐标变换
+# 这里取vicon系统的坐标原点为机体坐标系的初始位置
+# 相机底座坐标系（底座为前x,左y，上z) -机体初始坐标系（前x,左y，上z）
+# --------------------参考-----------------
+# world_to_base_postion = np.array([-4.9086054533165875 * 1000,
+#                                   -0.013612630037422996 * 1000,
+#                                   0.5221439220233584 * 1000])  # x,y,z
+# world_to_base_orientation = np.array([0.9986677753834854, 0.02512939711063896, 0.025573840751515756,
+#                                       -0.03711019375686801])  # w,x,y,z
+# R_world_to_base = quaternion_to_rotation_matrix(world_to_base_orientation)
+# # R_world_to_base = np.array(np.eye(3))
+# t_world_to_base = world_to_base_postion
+# R_base_to_world, t_base_to_world = inverse_trans(R_world_to_base, t_world_to_base)
+#  --------------------标定static-----------------
+# R_base_to_world = np.array([[0.98125596, 0.02913136, 0.19049437],
+#                             [-0.03879804, 0.99813106, 0.04721344],
+#                             [-0.18876295, - 0.05371927, 0.98055229]])
+# t_base_to_world = np.array([[4800.81147428],[450.63177],[-312.26851504]])
+# # vicon 标准值
+# quat_standard = [0.724774936, 0.004121771, -0.688612514, 0.022295936]  # Vicon测量 无人机在世界坐标系中的坐标,注意这里是w x y z
+# R_stadard = quaternion_to_rotation_matrix(quat_standard)
+# t_standard = np.array([-0.033750105 * 1000, 0.174828059 * 1000, 0.087099887 * 1000])
+# # --------------------标定rotate-----------------
+# R_base_to_world = np.array([[0.9873682,-0.14168757,-0.07091308],
+#                             [0.13573134 ,0.98728286, -0.08276202],
+#                             [0.08173762 ,0.07209146 ,0.99404315]])
+
+t_base_to_world = np.array([[4920.44665478],[491.45017905],[-364.87261198]])
+world_to_base_postion = np.array([-4.18718 * 1000,-0.493502*1000,0.401507*1000])
+world_to_base_orientation = np.array([0.999207, 0.0240946, 0.00882851,0.0304515])
+R_world_to_base = quaternion_to_rotation_matrix(world_to_base_orientation)
+# R_world_to_base = np.array(np.eye(3))
+t_world_to_base = world_to_base_postion
+R_base_to_world, t_base_to_world = inverse_trans(R_world_to_base, t_world_to_base)
+print ("--------------------------------")
+print R_base_to_world
+print t_base_to_world
+
+# vicon 标准值
+quat_standard = [0.695263766, 0.043037694, -0.71670895, 0.032929231]
+R_stadard = quaternion_to_rotation_matrix(quat_standard)
+t_standard = np.array([0.348814078 * 1000, -0.028669026*1000, 0.079758181*1000])
 
 # PNP方法求解 机体坐标系系到像素坐标系的坐标变换
 retval, rvec, tvec = cv2.solvePnP(objPoints.reshape(-1, 1, 3), imgPoints.reshape(-1,1,2), cameraMatrix, distCoeffs, flags=cv2.SOLVEPNP_ITERATIVE)  # 调用OpenCV库 pnp方法求解旋转向量与平移向量
-# tvec = np.array([-386.1569156785871,
-#                  502.5824356321939,
-#                  4817.618374086863]).reshape((-1, 1))
-
-
 R_pnp, _ = cv2.Rodrigues(rvec)  # 旋转向量转化为旋转矩阵
 R_pnp_inverse, t_pnp_inverse = inverse_trans(R_pnp, tvec)
 print("----------pnp求解的R----------")
@@ -123,22 +180,7 @@ print (tvec)
 print(R_pnp_inverse)
 print(t_pnp_inverse)
 
-# 初始时刻相机坐标系 -初始时刻机体坐标系  的坐标变换
-# 这里取vicon系统的坐标原点为机体坐标系的初始位置
-# 相机底座坐标系（底座为前x,左y，上z) -机体初始坐标系（前x,左y，上z）
-# world_to_base_postion = np.array([-4.9086054533165875 * 1000,
-#                                   -0.013612630037422996 * 1000,
-#                                   0.5221439220233584 * 1000])  # x,y,z
-# world_to_base_orientation = np.array([0.9986677753834854, 0.02512939711063896, 0.025573840751515756,
-#                                       -0.03711019375686801])  # w,x,y,z
-# R_world_to_base = quaternion_to_rotation_matrix(world_to_base_orientation)
-# R_world_to_base = np.array(np.eye(3))
-# t_world_to_base = world_to_base_postion
-# R_base_to_world, t_base_to_world = inverse_trans(R_world_to_base, t_world_to_base)
-R_base_to_world = np.array([[0.98125596, 0.02913136, 0.19049437],
-                            [-0.03879804, 0.99813106, 0.04721344],
-                            [-0.18876295, - 0.05371927, 0.98055229]])
-t_base_to_world = np.array([[4800.81147428],[450.63177],[-312.26851504]])
+
 # 相机初始坐标系 - 相机底座坐标系
 R_initCam_to_base, t_initCam_to_base = cal_camera_to_base(0, 0)
 # 相机初始坐标系 - 机体初始坐标系（Vicon坐标系原点）
@@ -160,15 +202,11 @@ print(t_camera_extrinsic)
 
 # 机体坐标系相对于初始状态（世界坐标系）的旋转变换
 # 满足T_pnp = (T_camera)*(T_camera_to_UAV0)* (T_UAV)^-1(T_UAV0_to_UAV)
-
 R_temp, t_temp = coordinate_trans(R_pnp_inverse, t_pnp_inverse, R_camera_extrinsic, t_camera_extrinsic)
 R_UAV_to_world, t_UAV_to_world = coordinate_trans(R_temp, t_temp, R_initCam_to_InitUAV, t_initCam_to_InitUAV)
 R_world_to_UAV, t_world_to_UAV = inverse_trans(R_UAV_to_world, t_UAV_to_world)
 
 # 计算值与标准值对比
-quat_standard = [0.724774936, 0.004121771, -0.688612514, 0.022295936]  # Vicon测量 无人机在世界坐标系中的坐标,注意这里是w x y z
-R_stadard = quaternion_to_rotation_matrix(quat_standard)
-t_standard = np.array([-0.033750105 * 1000, 0.174828059 * 1000, 0.087099887 * 1000])
 q_R= list(pyquaternion.Quaternion(matrix=R_world_to_UAV))
 print("---------------standard R---------------------")
 print(R_stadard)

@@ -4,8 +4,18 @@ import numpy as np
 import cv2
 import pyquaternion
 from pnp_detect.msg import points
+import pandas as pd
 
 
+# MyTime = []
+# x = []
+# y = []
+# z = []
+# qw = []
+# qx = []
+# qy = []
+# qz = []
+# n = 0
 # ======================================================
 # 定义坐标变换函数
 # ======================================================
@@ -83,6 +93,7 @@ def PNPpoints_InfoCallback(msg):
     img_3 = [msg.PNPPoints[2].x, msg.PNPPoints[2].y]
     img_4 = [msg.PNPPoints[1].x, msg.PNPPoints[1].y]
     imgPoints = np.array([img_1, img_2, img_3, img_4], dtype=np.float64)
+    time = msg
     # 舵机角度
     UGV_1 = msg.PNPPoints[4].x
     UGV_2 = msg.PNPPoints[4].y
@@ -102,7 +113,10 @@ def PNPpoints_InfoCallback(msg):
     world3 = np.array([50, -55, -150])
     world4 = np.array([50, 55, -150])
     objPoints = np.array([world1, world2, world3, world4], dtype=np.float64)
-
+    img_1 = [msg.PNPPoints[0].x, msg.PNPPoints[0].y]
+    img_2 = [msg.PNPPoints[3].x, msg.PNPPoints[3].y]
+    img_3 = [msg.PNPPoints[2].x, msg.PNPPoints[2].y]
+    img_4 = [msg.PNPPoints[1].x, msg.PNPPoints[1].y]
     # PNP方法求解 机体坐标系系到像素坐标系的坐标变换
     retval, rvec, tvec = cv2.solvePnP(objPoints.reshape(-1, 1, 3), imgPoints.reshape(-1, 1, 2), cameraMatrix,
                                       distCoeffs,
@@ -110,20 +124,27 @@ def PNPpoints_InfoCallback(msg):
 
     R_pnp, _ = cv2.Rodrigues(rvec)  # 旋转向量转化为旋转矩阵
     R_pnp_inverse, t_pnp_inverse = inverse_trans(R_pnp, tvec)
-    print("----------pnp求解的R----------")
-    print(R_pnp)
-    print("----------pnp求解的t----------")
-    print (tvec)
+
     # print(R_pnp_inverse)
     # print(t_pnp_inverse)
 
     # 初始时刻相机坐标系 -初始时刻机体坐标系  的坐标变换
     # 这里取vicon系统的坐标原点为机体坐标系的初始位置
     # 相机底座坐标系（底座为前x,左y，上z) -机体初始坐标系（前x,左y，上z）
-    R_base_to_world = np.array([[0.98125596, 0.02913136, 0.19049437],
-                            [-0.03879804, 0.99813106, 0.04721344],
-                            [-0.18876295, - 0.05371927, 0.98055229]])
-    t_base_to_world = np.array([[4800.81147428],[450.63177],[-312.26851504]])
+    # -------------------------rotate-------------------------
+    # R_base_to_world = np.array([[0.9873682,-0.14168757,-0.07091308],
+    #                             [0.13573134 ,0.98728286, -0.08276202],
+    #                             [0.08173762 ,0.07209146 ,0.99404315]])
+    # t_base_to_world = np.array([[4920.44665478],[491.45017905],[-364.87261198]])
+    # -------------------------static---------------------------------
+    # R_base_to_world = np.array([[0.98125596, 0.02913136, 0.19049437],
+    #                             [-0.03879804, 0.99813106, 0.04721344],
+    #                             [-0.18876295, - 0.05371927, 0.98055229]])
+    # t_base_to_world = np.array([[4800.81147428],[450.63177],[-312.26851504]])
+    R_base_to_world = np.array([[0.99798953, -0.06042924,  0.01911044],
+                                [0.06128012,  0.99698431, -0.04761328],
+                                [-0.01617558,  0.04868865,  0.99868302]])
+    t_base_to_world = np.array([[4141.26686402],[767.7217012],[-444.68033229]])
     # 相机初始坐标系 - 相机底座坐标系
     R_initCam_to_base, t_initCam_to_base = cal_camera_to_base(0, 0)
     # 相机初始坐标系 - 机体初始坐标系（Vicon坐标系原点）
@@ -142,46 +163,63 @@ def PNPpoints_InfoCallback(msg):
 
     # 将旋转矩阵转化为四元数
     q_R = list(pyquaternion.Quaternion( matrix=R_world_to_UAV))
-    print("---------------calculate R---------------------")
-    print(R_world_to_UAV)
-    print("---------------calculate t---------------------")
-    print(t_world_to_UAV)
+    # print("---------------calculate R---------------------")
+    # print(R_world_to_UAV)
+    # print("---------------calculate t---------------------")
+    # print(t_world_to_UAV)
 
+    # 保存成csv格式
+    # f = pd.read_csv('rotate_test.csv', index_col=None)
+    # time = list(f['time'])
+    # x = list(f['x'])
+    # y = list(f['y'])
+    # z = list(f['z'])
+    # qw = list(f['qw'])
+    # qx = list(f['qx'])
+    # qy = list(f['qy'])
+    # qz = list(f['qz'])
+    # MyTime.append(msg.header.stamp)
+    # x.append(t_world_to_UAV[0][0])
+    # y.append(t_world_to_UAV[1][0])
+    # z.append(t_world_to_UAV[2][0])
+    # qw.append(q_R[0])
+    # qx.append(q_R[1])
+    # qy.append(q_R[2])
+    # qz.append(q_R[3])
+
+# 发布新的话题
+    pnp_info_pub = rospy.Publisher('/calculate_info', points, queue_size=10)
+    calculate_msg = points()
+    calculate_msg.header.stamp = msg.header.stamp
+    # calculate_msg. =
+    # 初始化learning_topic::Person类型的消息
+
+    calculate_msg.t.x = t_world_to_UAV[0]
+    calculate_msg.t.y = t_world_to_UAV[1]
+    calculate_msg.t.z = t_world_to_UAV[2]
+
+    calculate_msg.q[0] = q_R[0]
+    calculate_msg.q[1] = q_R[1]
+    calculate_msg.q[2] = q_R[2]
+    calculate_msg.q[3] = q_R[3]
+
+    # 发布消息
+    pnp_info_pub.publish(calculate_msg)
+    rospy.loginfo("Publsh calculate message")
 
 
 def pnp_detect_subscriber():
     # ROS节点初始化
     rospy.init_node('detetc', anonymous=True)
-    print("1")
     # 创建一个Subscriber，订阅名为/person_info的topic，注册回调函数personInfoCallback
     rospy.Subscriber("/image_pnp_points", points, PNPpoints_InfoCallback)
     # 循环等待回调函数
     rospy.spin()
 
-# def velocity_publisher():
-#     # ROS节点初始化
-#     rospy.init_node('detetc', anonymous=True)
-#     # 创建一个Publisher，发布名为/person_info的topic，消息类型为learning_topic::Person，队列长度10
-#     person_info_pub = rospy.Publisher('/calulate_pose', calculate, queue_size=10)
-#     #设置循环的频率
-#     rate = rospy.Rate(10)
-#     while not rospy.is_shutdown():
-#         # 初始化pnp_detect::points类型的消息
-#         person_msg = calculate()
-#         person_msg. = "Tom"
-#         person_msg.age = 18
-#         person_msg.sex = Person.male
-#         # 发布消息
-#         person_info_pub.publish(person_msg)
-#         rospy.loginfo("Publsh person message[%s, %d, %d]",
-#                       person_msg.name, person_msg.age, person_msg.sex)
-#         # 按照循环频率延时
-#         rate.sleep()
 
 if __name__ == '__main__':
     pnp_detect_subscriber()
-    # try:
-    #     velocity_publisher()
-    # except rospy.ROSInterruptException:
-    # pass
+    # data = {'time': MyTime, 'x': x, 'y': y, 'z': z, 'qw': qw, 'qx': qx, 'qy': qy, 'qz': qz}
+    # Df = pd.DataFrame(data)
+    # Df.to_csv('rotate_test.csv')
 
