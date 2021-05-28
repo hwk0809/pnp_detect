@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(pnp_detect)
 
+add_definitions(-std=c++11)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
